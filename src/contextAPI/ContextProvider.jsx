@@ -1,15 +1,19 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 
+// API URL
+
 // Create Context
 const TaskContext = createContext();
 
 // Context Provider
 export const TaskProvider = ({ children }) => {
+  const url = "https://task-manager-backend-ashy-ten.vercel.app/api/tasks";
+
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const fetchTasks = async () => {
     try {
-      const response = await fetch("http://localhost:8081/api/tasks");
+      const response = await fetch(`${url}/`);
       const data = await response.json();
       setTasks(data);
     } catch (error) {
@@ -26,7 +30,7 @@ export const TaskProvider = ({ children }) => {
   // Add a new task
   const addTask = async (task) => {
     try {
-      const response = await fetch("http://localhost:8081/api/tasks/create", {
+      const response = await fetch(`${url}/create`, {
         method: "POST",
         body: task, // Send FormData directly
       });
@@ -45,13 +49,10 @@ export const TaskProvider = ({ children }) => {
   // Update task details
   const updateTask = async (taskId, updatedTaskData) => {
     try {
-      const response = await fetch(
-        `http://localhost:8081/api/tasks/${taskId}`,
-        {
-          method: "PUT",
-          body: updatedTaskData, // Send FormData directly
-        }
-      );
+      const response = await fetch(`${url}/${taskId}`, {
+        method: "PUT",
+        body: updatedTaskData, // Send FormData directly
+      });
       if (response.ok) {
         await fetchTasks();
       }
@@ -63,7 +64,7 @@ export const TaskProvider = ({ children }) => {
       //   );
       // }
       let err = await response.json();
-      alert(err.message);
+      if (err.message) alert(err.message);
     } catch (error) {
       console.error("Error updating task:", error);
     }
@@ -72,12 +73,9 @@ export const TaskProvider = ({ children }) => {
   // Delete a task
   const deleteTask = async (taskId) => {
     try {
-      const response = await fetch(
-        `http://localhost:8081/api/tasks/${taskId}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const response = await fetch(`${url}/${taskId}`, {
+        method: "DELETE",
+      });
       if (response.ok) {
         await fetchTasks();
       }
@@ -91,28 +89,26 @@ export const TaskProvider = ({ children }) => {
 
   const downloadTaskFile = async (taskId) => {
     try {
-      const response = await fetch(
-        `http://localhost:8081/api/tasks/file/${taskId}`,
-        {
-          method: "GET",
-        }
-      );
+      let curr = `${url}/file/${taskId}`;
+      const response = await fetch(curr, {
+        method: "GET",
+      });
 
       if (!response.ok) {
         throw new Error("Failed to download file");
       }
 
       const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      const urls = window.URL.createObjectURL(blob);
 
       // Create a temporary link and trigger the download
       const a = document.createElement("a");
-      a.href = url;
+      a.href = urls;
       a.download = `task-${taskId}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
+      window.URL.revokeObjectURL(urls);
     } catch (error) {
       console.error("Error downloading file:", error);
     }
